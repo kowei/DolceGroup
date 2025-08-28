@@ -57,3 +57,20 @@
     - [ ] 登入 AWS Console，找到 Kendra 索引。
     - [ ] 找到對應的 S3 Data Source，手動觸發第一次的 `Sync`，讓 Kendra 開始索引 S3 中的文件。
 
+### Phase 5: API Gateway 配置與驗證
+
+此階段旨在確保 API Gateway 作為系統入口的正確配置與安全性。
+
+- [ ] **基本配置確認**：
+    - [ ] 確認 `template.yaml` 中 `ApiGateway` 資源的 `StageName` 和 `Cors` 設定符合預期。
+    - [ ] 確認 `LineRouterFunction` 的 `Events` 中 `Api` 類型事件的 `Path` (`/line/webhook`) 和 `Method` (`post`) 設定正確。
+- [ ] **安全考量**：
+    - [ ] 確認 `LineRouterFunction` 的程式碼中，已實作 LINE Webhook 請求的**簽章驗證** (`X-Line-Signature`)。這是防止偽冒請求的關鍵步驟。
+    - [ ] 若未來有其他 API 端點，需評估是否需要啟用 API Keys 或其他授權機制。
+- [ ] **監控**：
+    - [ ] 登入 CloudWatch Console，檢視 API Gateway 的預設指標 (Metrics)，例如 `Count` (請求數)、`Latency` (延遲)、`5XXError` (伺服器錯誤數)。
+    - [ ] 考慮為關鍵指標設定告警 (Alarms)。
+- [ ] **測試**：
+    - [ ] 取得部署後 API Gateway 的實際 URL。
+    - [ ] 使用工具 (如 Postman 或 curl) 發送模擬的 POST 請求到 `/line/webhook` 端點，驗證 API Gateway 是否能正確接收請求並觸發 Lambda。
+    - [ ] **[重要]** 務必使用 LINE 官方提供的工具或 SDK 進行真實的 Webhook 測試，確保簽章驗證流程正確無誤。
