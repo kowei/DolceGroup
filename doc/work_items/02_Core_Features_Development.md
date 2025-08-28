@@ -50,13 +50,18 @@
 ### Phase 4: 創意發想功能開發 (Creative AI Lambda)
 
 - [ ] **IaC 資源定義**：在 `template.yaml` 中建立 `CreativeAiFunction` 的資源定義，並授予呼叫 DALL-E API (透過 Secrets Manager 讀取 API Key) 的權限，以及寫入 RDS `ai_generations` 表的權限。
+- [ ] **(UX) 立即回應實作**：在呼叫 DALL-E API **之前**，先立即呼叫 LINE Reply API 回傳一則「處理中，請稍候...」的訊息。 # 註：管理使用者對於 DALL-E 生成時間的期待，避免困惑。
+- [ ] **(Safety) 內容審核**：在將使用者輸入傳給 DALL-E 之前，先呼叫 OpenAI Moderation API 進行檢查，若有問題則直接拒絕請求。 # 註：保護品牌聲譽，過濾不適當的內容生成請求。
+- [ ] **(Prompting) 系統提示模板**：在 Lambda 程式碼中定義一個系統提示模板，用來「包裝」使用者的原始輸入，再傳給 DALL-E。 # 註：確保生成圖片的風格、品質、構圖一致。
 - [ ] **API 呼叫邏輯**：
     - [ ] 實作呼叫 DALL-E API 的客戶端邏輯。
     - [ ] 處理 API 可能的錯誤與逾時。
 - [ ] **資料庫寫入**：
     - [ ] 在生成圖像後，將使用者的 Prompt、回傳的圖像 URL/S3 Key、模型資訊等，存入 RDS 的 `ai_generations` 表中。
+- [ ] **(Monitoring) 指標監控**：在程式碼中加入 CloudWatch 自訂指標 (Custom Metrics)，記錄 DALL-E API 的呼叫次數與成功/失敗率。 # 註：為成本控管與服務穩定性提供數據基礎。
 - [ ] **測試**：
-    - [ ] 撰寫整合測試，驗證是否能成功呼叫 DALL-E API 並將結果存入資料庫。
+    - [ ] 撰寫單元測試，驗證系統提示模板是否能正確組合。
+    - [ ] 撰寫整合測試，驗證完整的流程：從接收事件 -> 內容審核 -> 呼叫 DALL-E -> 存入資料庫 -> 回傳圖片訊息。
 
 ### Phase 5: 部署
 
