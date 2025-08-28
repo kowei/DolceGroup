@@ -1,4 +1,4 @@
-# 維運操作手冊 (Operations Guide) v1.3 (Node.js 完整版)
+# 維運操作手冊 (Operations Guide) v1.4 (Node.js 完整版)
 
 本手冊旨在提供一個清晰、可執行的指引，幫助開發者從零開始設定、建置、測試與部署本專AI整合專案的完整基礎設施（使用 Node.js）。
 
@@ -58,7 +58,7 @@ dolce-group-ai-service/
 `template.yaml` 是專案的核心，它定義了所有 AWS 資源。以下是完整的配置範例。
 
 ```yaml
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: &#x27;2010-09-09&#x27;
 Transform: AWS::Serverless-2.0
 Description: >
   Dolce Group - AI Integration Service (Full Infrastructure with Node.js)
@@ -97,7 +97,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: &#x27;2012-10-17&#x27;
         Statement:
           - Effect: Allow
             Principal:
@@ -106,10 +106,10 @@ Resources:
       Policies:
         - PolicyName: KendraS3AccessPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: &#x27;2012-10-17&#x27;
             Statement:
               - Effect: Allow
-                Action: ['s3:GetObject']
+                Action: [&#x27;s3:GetObject&#x27;]
                 Resource: !Sub "arn:aws:s3:::${KnowledgeBaseBucket}/*"
 
   KendraIndex:
@@ -187,6 +187,20 @@ Resources:
 2.  **參數傳遞**：如上面的 `template.yaml` 範例所示，我們不直接在應用程式的 SAM 範本中定義 RDS 實例。而是將已建立好的資料庫的**連線資訊**（如 `DbSecurityGroupId`, `DbEndpointAddress`）作為**參數**傳遞給 SAM 範本。
 3.  **安全連接**：Lambda 透過被指派到與 RDS 相同的 `SecurityGroup` 來獲得資料庫的存取權限。這是一種安全且解耦的作法。
 
+### 4.1. 開發人員安全存取 RDS (Developer Secure RDS Access)
+
+由於 RDS 資料庫部署在私有子網路中，無法直接從網際網路存取。為了開發、除錯或資料庫管理，開發人員需要透過安全的方式連接。以下是推薦的選項：
+
+1.  **AWS Client VPN (推薦)**：
+    - **優點**：提供受管理的 VPN 服務，開發人員可透過 VPN 客戶端建立加密通道，安全地連接到 VPC 內部網路。
+    - **適用情境**：需要頻繁、穩定且安全的遠端存取。
+2.  **堡壘機 (Bastion Host / Jump Box)**：
+    - **優點**：在公共子網路中部署一台小型 EC2 實例作為跳板機，開發人員先 SSH 連線到堡壘機，再從堡壘機內部連線到 RDS。
+    - **適用情境**：對安全性要求高，且希望有明確的存取控制點。
+3.  **AWS Systems Manager Session Manager (搭配 Port Forwarding)**：
+    - **優點**：無需開放 SSH 埠，透過 SSM 建立安全通道，將本地資料庫連線請求轉發到私有子網路中的 RDS。高度安全且易於管理。
+    - **適用情境**：希望以最少管理負擔和最高安全性進行臨時或受控的資料庫存取。
+
 ## 5. 建置與部署流程
 
 ### 步驟 1: 安裝依賴項
@@ -242,6 +256,8 @@ SAM 會詢問您一系列問題，請依序回答，例如：
 
 ```bash
 sam local invoke LineRouterFunction -e events/line_webhook_event.json
+```
+
 ```
 
 ```
